@@ -67,6 +67,22 @@ async function getProfile(httpRequest, headers) {
       headers,
     });
   } catch (error) {
+    // --- DIAGNOSTIC LOG START ---
+    try {
+      const cache = new Set();
+      const stringifiedError = JSON.stringify(error, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (cache.has(value)) return '[Circular]';
+          cache.add(value);
+        }
+        return value;
+      }, 2);
+      console.log('n8n Diagnostic Error Object:', stringifiedError);
+    } catch (logErr) {
+      console.log('Failed to stringify diagnostic error:', logErr.message);
+    }
+    // --- DIAGNOSTIC LOG END ---
+
     if (error.response?.status === 401) {
       throw new Error('Authentication failed: The provided session cookies are invalid or expired.');
     }
@@ -335,18 +351,29 @@ async function runVoyagerAnalytics(httpRequest, liAt, jsessionid) {
   const profileInfo = await getProfile(httpRequest, headers);
   const { dashUrn, ...profileSummary } = profileInfo;
 
-  // 2. Fetch recent posts
-  const postsResponse = await getPosts(httpRequest, headers, dashUrn);
+  // 2. Fetch recent posts & compute analytics
+  try {
+    const postsResponse = await getPosts(httpRequest, headers, dashUrn);
+    const { summary, posts } = buildAnalytics(postsResponse);
 
-  // 3. Process data & compute analytics
-  const { summary, posts } = buildAnalytics(postsResponse);
+    return {
+      success: true,
+      profile: profileSummary,
+      analytics: summary,
+      posts,
+    };
+  } catch (postsError) {
+    // Re-use calculateSummary empty-state path when postRecords.length === 0
+    const emptySummary = calculateSummary([]);
 
-  return {
-    success: true,
-    profile: profileSummary,
-    analytics: summary,
-    posts,
-  };
+    return {
+      success: true,
+      profile: profileSummary,
+      analytics: emptySummary,
+      posts: [],
+      postsError: postsError.message,
+    };
+  }
 }
 
 // ==========================================
