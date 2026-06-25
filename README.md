@@ -124,6 +124,8 @@ Returns a single object structured as follows:
 }
 ```
 
+*Note: If post fetching fails, the response will still return `success: true` with your profile details, but will include a `postsError` field containing the failure message (which is completely absent on standard successful runs).*
+
 See [sample-output.json](sample-output.json) for a complete mock representation of the returned payload.
 
 ---

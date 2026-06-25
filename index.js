@@ -51,6 +51,33 @@ function getHeaders(liAt, jsessionid) {
 }
 
 /**
+ * Defensive helper to extract the HTTP status code from any n8n httpRequest error.
+ * Handles Axios, request-promise-native, n8n wrappers, and nested error causes.
+ * 
+ * @param {Error} error - The caught error object.
+ * @returns {number|string|null} The status code if found, otherwise null.
+ */
+function getHttpStatusCode(error) {
+  if (!error) return null;
+  
+  if (error.statusCode) return error.statusCode;
+  if (error.httpCode) return error.httpCode;
+  if (error.status) return error.status;
+  
+  if (error.response?.status) return error.response.status;
+  if (error.response?.statusCode) return error.response.statusCode;
+  
+  if (error.cause) {
+    if (error.cause.statusCode) return error.cause.statusCode;
+    if (error.cause.httpCode) return error.cause.httpCode;
+    if (error.cause.status) return error.cause.status;
+    if (error.cause.response?.status) return error.cause.response.status;
+  }
+  
+  return null;
+}
+
+/**
  * Fetches the authenticated user's profile and extracts URN pointers.
  * 
  * @param {Function} httpRequest - The n8n HTTP request helper (this.helpers.httpRequest).
@@ -67,26 +94,12 @@ async function getProfile(httpRequest, headers) {
       headers,
     });
   } catch (error) {
-    // --- DIAGNOSTIC LOG START ---
-    try {
-      const cache = new Set();
-      const stringifiedError = JSON.stringify(error, (key, value) => {
-        if (typeof value === 'object' && value !== null) {
-          if (cache.has(value)) return '[Circular]';
-          cache.add(value);
-        }
-        return value;
-      }, 2);
-      console.log('n8n Diagnostic Error Object:', stringifiedError);
-    } catch (logErr) {
-      console.log('Failed to stringify diagnostic error:', logErr.message);
-    }
-    // --- DIAGNOSTIC LOG END ---
+    const statusCode = getHttpStatusCode(error);
 
-    if (error.response?.status === 401) {
+    if (statusCode == 401) {
       throw new Error('Authentication failed: The provided session cookies are invalid or expired.');
     }
-    if (error.response?.status === 429) {
+    if (statusCode == 429) {
       throw new Error('Rate limited: Too many requests. LinkedIn has throttled the current IP/session.');
     }
     throw new Error(`Profile fetch failed: ${error.message}`);
