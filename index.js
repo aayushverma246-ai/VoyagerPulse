@@ -102,6 +102,17 @@ async function getProfile(httpRequest, headers) {
     if (statusCode == 429) {
       throw new Error('Rate limited: Too many requests. LinkedIn has throttled the current IP/session.');
     }
+
+    const errorMessage = error && error.message ? String(error.message) : '';
+    if (/maximum\s*(number\s+of\s*)?redirects/i.test(errorMessage)) {
+      throw new Error(
+        'Authentication failed: LinkedIn responded with a redirect loop instead of ' +
+        'profile data. This happens when li_at or JSESSIONID is expired or invalid — ' +
+        'LinkedIn tries to clear the session cookie and re-authenticate repeatedly. ' +
+        'Refresh both cookies from a fresh, logged-in browser session and try again.'
+      );
+    }
+
     throw new Error(`Profile fetch failed: ${error.message}`);
   }
 
