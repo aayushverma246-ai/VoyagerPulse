@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 jspm_packages/
+.next/
 
 # Debug logs
 npm-debug.log*
@@ -32,3 +33,13 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output
+
+.vercel
+
+# Generated Zip Archives
+*.zip
+.clean-temp/
+
+# Temp duplicated directories
+voyagerpulse/
+

@@ -1,176 +1,201 @@
-# LinkedIn Cookie Analytics for n8n
+# VoyagerPulse 🚀
 
-[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![JavaScript](https://img.shields.io/badge/language-JavaScript-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![n8n Compatible](https://img.shields.io/badge/n8n-Compatible-orange.svg)](https://n8n.io/)
-[![GitHub Stars](https://img.shields.io/badge/GitHub-Stars-blue.svg)](#)
+> **Advanced LinkedIn Content Analytics Platform**
 
-A lightweight, high-performance JavaScript utility for **n8n** that retrieves the currently authenticated LinkedIn user's profile, recent posts, and computes detailed engagement analytics using only session cookies.
+VoyagerPulse is a portfolio-grade, production-ready SaaS dashboard and analytics platform designed for content creators, founders, and developer advocates. It provides comprehensive visual reporting, trends tracking, and actionable posting style recommendations.
 
-> [!NOTE]
-> This project utilizes LinkedIn's internal Voyager API. It is designed **exclusively** for fetching analytics for the authenticated user account and **cannot** be used to scrape arbitrary LinkedIn profiles.
+The platform securely connects to LinkedIn's internal Voyager GraphQL API using session cookies (`li_at` and `JSESSIONID`), caching data in a normalized Supabase PostgreSQL database to perform statistical analytics and rule-based optimizations.
+
+**Production URL**: [https://linkedin-voyager-analytics.vercel.app](https://linkedin-voyager-analytics.vercel.app)
 
 ---
 
-## Features
+## Key Features
 
-- **✅ Fetch Authenticated Profile**: Retrieves name, occupation, public identifier, and profile URL.
-- **✅ Retrieve Recent Posts**: Queries the user's latest updates (up to 20 recent posts).
-- **✅ Compute Engagement Analytics**: Aggregates likes, comments, shares, and impressions.
-- **✅ Rank Posts by Engagement**: Orders posts by engagement score, using engagement rate as a tie-breaker.
-- **✅ Cookie-Based Authentication**: Operates entirely with active browser cookies; no password needed.
-- **✅ No Browser Automation**: Lightweight, fast, and does not require Puppeteer, Playwright, or Selenium.
-- **✅ Lightweight**: No external npm dependencies required inside n8n.
-- **✅ Works in n8n**: Standardized Code Node format ready to copy-paste or import.
-
----
-
-## How It Works
-
-LinkedIn uses an internal API system known as **Voyager**. By capturing your active session cookies (`li_at` and `JSESSIONID`), this utility mimics a desktop browser request to:
-1. Query the `/voyager/api/me` endpoint to identify the user URN and resolve the `miniProfile` entity.
-2. Query the Voyager GraphQL engine `/voyager/api/graphql` using the resolved member URN to retrieve recent updates.
-3. Parse and index `SocialActivityCounts` and `Update` records to match interaction data with post contents.
-4. Calculate engagement statistics and rank posts.
+- 🔐 **Secure Session Credentials**: Plaintext cookies never touch our database. All keys are encrypted symmetrically in database columns using AES-256-GCM.
+- 📊 **Interactive Analytics (Recharts)**: High-fidelity visualizations mapping engagement score timelines, average impression scales, content type breakdowns, and hashtag performance.
+- ⚡ **Rule-Based Insights**: Custom analytical algorithms parsing keywords, character lengths, and formatting structure to generate posting recommendations.
+- 📋 **Flexible Catalog Table**: Full search filters, type categorization, dynamic column sorting, pagination, and one-click client-side CSV downloads.
+- 🏆 **Performance Highlighting**: Clean cards showing top ranked updates, visual statistics, copy-to-clipboard actions, and quick-launch links.
+- 👤 **Supabase Authentication**: Secure login, registration, and account middleware handlers.
+- 🧪 **Interactive Demo Seeder**: reviewer-friendly seeder mode generating synthetic mock data matching real-world structures instantly.
 
 ---
 
-## Setup & Installation
+## Tech Stack
 
-### 1. Retrieve LinkedIn Cookies
-
-To authenticate the request, you must extract two cookies from an active LinkedIn browser session:
-
-1. Open LinkedIn in your browser and log in.
-2. Open the browser's developer tools (F12 or Right Click -> **Inspect**).
-3. Navigate to the **Application** (Chrome/Edge) or **Storage** (Firefox) tab.
-4. Under **Storage** -> **Cookies**, select `https://www.linkedin.com`.
-5. Find and copy the values for:
-   - **`li_at`**: The session token.
-   - **`JSESSIONID`**: The CSRF token (usually starts with `ajax:`).
-
-> [!WARNING]
-> Keep your cookies secure. Anyone who has access to your `li_at` cookie can access your LinkedIn account. Never commit cookies to Git or public repositories.
-
-### 2. Import to n8n
-
-You can import the pre-configured workflow:
-
-1. Copy the contents of [workflow.json](workflow.json).
-2. Open your n8n workspace, create a new workflow, and paste the JSON (Ctrl+V / Cmd+V) directly onto the canvas.
-3. Open the **Define Credentials** node and replace `YOUR_LI_AT_COOKIE_HERE` and `YOUR_JSESSIONID_HERE` with your extracted cookie values.
-4. Click **Execute Workflow**.
+| Tier | Technology | Description |
+|---|---|---|
+| **Frontend** | React 19 / Next.js 16 (App Router) | High-performance React engine with TypeScript. |
+| **Styling** | Tailwind CSS v4 & Framer Motion | Obsidian dark mode first design with glassmorphism panels. |
+| **Database** | Supabase (PostgreSQL) | Fully relational storage, schema RLS, and sync triggers. |
+| **ORM** | Prisma v5 | Type-safe queries, migration managers, and model mappings. |
+| **Charts** | Recharts | Dynamic interactive SVGs for performance mapping. |
+| **Table** | TanStack Table | Heavy-duty sorting, filtering, and exports handlers. |
+| **Auth** | Supabase Auth (PKCE) | User profile syncer and server middleware redirects. |
 
 ---
 
-## Input / Output Specs
+## Architectural Data Model
 
-### Input Format
+VoyagerPulse is backed by a highly normalized schema mapping user profiles, posts data, analytics, settings, and refresh logs:
 
-The script expects the input node to provide the cookies as JSON fields:
-
-```json
-{
-  "li_at": "AQEDAWER...",
-  "JSESSIONID": "ajax:1385..."
-}
-```
-
-### Output Format
-
-Returns a single object structured as follows:
-
-```json
-{
-  "success": true,
-  "profile": {
-    "fullName": "Jane Doe",
-    "occupation": "Senior Developer Advocate at TechCorp",
-    "publicIdentifier": "jane-doe-advocate",
-    "profileUrl": "https://www.linkedin.com/in/jane-doe-advocate"
-  },
-  "analytics": {
-    "postsFound": 3,
-    "totalLikes": 340,
-    "totalComments": 45,
-    "totalShares": 12,
-    "totalImpressions": 8500,
-    "averageLikes": 113.33,
-    "averageComments": 15,
-    "averageShares": 4,
-    "averageImpressions": 2833.33,
-    "averageEngagementRate": 4.67,
-    "highestEngagementPost": { ... },
-    "highestViewedPost": { ... },
-    "lowestPerformingPost": { ... }
-  },
-  "posts": [
-    {
-      "activityUrn": "urn:li:activity:7123456789012345678",
-      "text": "Post content text here...",
-      "postUrl": "https://www.linkedin.com/feed/update/urn:li:activity:7123456789012345678",
-      "postedRelative": "2d",
-      "numLikes": 210,
-      "numComments": 30,
-      "numShares": 8,
-      "numImpressions": 4500,
-      "engagementScore": 248,
-      "engagementRate": 5.51,
-      "reactionBreakdown": [ ... ],
-      "missingUpdateObject": false,
-      "rank": 1
+```mermaid
+erDiagram
+    Profile ||--o| Settings : has
+    Profile ||--o{ Post : publishes
+    Profile ||--o{ Analytics : tracks
+    Profile ||--o{ RefreshHistory : logs
+    
+    Profile {
+        uuid id PK
+        string fullName
+        string occupation
+        string publicIdentifier
+        string profileUrl
+        string avatarUrl
+        string encryptedLiAt
+        string encryptedJsessionid
+        timestamp createdAt
     }
-  ]
-}
+    
+    Post {
+        uuid id PK
+        uuid profileId FK
+        string activityUrn UK
+        string text
+        string postUrl
+        string postedRelative
+        int numLikes
+        int numComments
+        int numShares
+        int numImpressions
+        int engagementScore
+        float engagementRate
+        json reactionBreakdown
+        string postType
+        string[] hashtags
+        string[] mentions
+    }
+    
+    Analytics {
+        uuid id PK
+        uuid profileId FK
+        int postsCount
+        int totalLikes
+        int totalComments
+        int totalShares
+        int totalImpressions
+        float averageLikes
+        float averageComments
+        float averageShares
+        float averageImpressions
+        float averageEngagementRate
+        json topHashtags
+        json topMentions
+        json insights
+    }
+    
+    RefreshHistory {
+        uuid id PK
+        uuid profileId FK
+        string status
+        string errorMessage
+        int postsFetched
+        timestamp createdAt
+    }
+    
+    Settings {
+        uuid id PK
+        uuid profileId FK
+        string theme
+        boolean autoRefresh
+    }
 ```
-
-*Note: If post fetching fails, the response will still return `success: true` with your profile details, but will include a `postsError` field containing the failure message (which is completely absent on standard successful runs).*
-
-See [sample-output.json](sample-output.json) for a complete mock representation of the returned payload.
 
 ---
 
-## Repository Structure
+## Getting Started
 
+### 1. Prerequisites
+Ensure you have `Node.js >= 20.x` and `pnpm >= 10.x` installed locally.
+
+### 2. Installation
+Clone this repository and install dependencies:
+```bash
+pnpm install
 ```
-linkedin-cookie-analytics/
-├── .gitignore          # Git exclusion rules for node_modules, logs, and secrets
-├── LICENSE             # MIT License details
-├── CHANGELOG.md        # Log of versioned changes
-├── README.md           # Documentation and setup instructions
-├── index.js            # Refactored modular JavaScript implementation
-├── sample-output.json  # Complete example of the analytics output schema
-└── workflow.json       # Copy-pasteable n8n workflow configuration
+
+### 3. Setup Environment Variables
+Create a `.env` file in the root workspace based on `.env.example`:
+```bash
+cp .env.example .env
 ```
+Fill in the following variables:
+- `DATABASE_URL`: Connection pooled Postgres string.
+- `DIRECT_URL`: Direct database connection bypassing poolers (used for migrations).
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Keys from your Supabase Project API Settings.
+- `ENCRYPTION_KEY`: A 64-character hexadecimal key (32 bytes) used for cookie column security.
+
+### 4. Database Setup & Migrations
+Initialize database schemas and compile Prisma types:
+```bash
+npx prisma db push
+npx prisma generate
+```
+
+### 5. Running Locally
+Launch the Next.js development server:
+```bash
+pnpm run dev
+```
+Open `http://localhost:3000` to review the dashboard.
 
 ---
 
-## Limitations
+## Production Deployment
 
-- **Session Expiration**: LinkedIn session cookies expire periodically. You will need to refresh the `li_at` and `JSESSIONID` cookies in your n8n configuration when this happens.
-- **Undocumented API**: The Voyager API is LinkedIn's internal endpoint. This means endpoints, schemas, query parameters, or query IDs can change without warning, which might cause the integration to break.
-- **Rate Limits**: Excessive polling may lead to temporary rate-limiting (HTTP 429). It is recommended to run this workflow on a scheduled cron trigger no more than once per hour.
+This project is configured for automated Vercel hosting using Next.js App Router parameters:
+
+```bash
+# Log in to Vercel CLI
+vercel login
+
+# Link repository to your workspace
+vercel link
+
+# Build and deploy previews
+vercel deploy
+
+# Promote preview to production URL
+vercel deploy --prod
+```
+
+During deployment, Next.js will automatically run `"prisma generate && next build"`, compiling database types and bundling static segments.
 
 ---
 
-## Disclaimer
+## Security Framework
 
-This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with LinkedIn Corporation. Using internal APIs violates LinkedIn's User Agreement under section 8.2 (prohibiting scraping, cloning, or using automated tools without permission). Use this utility responsibly and at your own risk.
+1. **Row Level Security (RLS)**: PostgreSQL tables are locked down. RLS policies ensure that authenticated users can only select or modify their own data matching their `auth.uid()`.
+2. **Plaintext Protection**: Symmetric encryption is handled via Node's `crypto` module implementing AES-256-GCM. Plaintext cookie variables are destroyed in memory immediately following HTTP Voyager fetches.
+3. **No LLM Leaks**: Insights calculation runs in a sandbox on our backend service utilizing rule-based mathematics. No third-party LLM providers can scrape or index your data without explicit opt-in.
+
+---
+
+## Packaging & Distribution
+
+To package a clean, production-ready, and credential-stripped copy of this codebase for sharing or publishing to GitHub (excluding `.env`, `node_modules`, and build folders), run:
+
+```bash
+pnpm run zip
+```
+
+This executes our bundle utility `scripts/bundle-project.js`, which recursively packages the repository contents into a clean `voyagerpulse.zip` file in the project root.
 
 ---
 
 ## Future Improvements
-
-- Add support for pagination to fetch historical posts older than the recent 20 posts.
-- Auto-extract and chart engagement changes week-over-week.
-- Send discord/slack alerts notifying users when a post is performing above the average engagement threshold.
-
----
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request if you discover schema changes or have feature suggestions.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- **LLM Insights Enrichment**: Integrate OpenAI/Gemini connectors so users can ask conversational questions about their content (e.g. "Draft a post similar to my top performing text updates").
+- **Auto Sync Cron scheduler**: Execute automatic, daily updates in the background using Supabase Cron Webhooks.
+- **Multilingual Tokenizer**: Implement custom TF-IDF keyword parsers supporting content analysis across different languages.

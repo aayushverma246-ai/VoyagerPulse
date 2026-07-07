@@ -1,0 +1,96 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Profile {
+  id                  String           @id @db.Uuid
+  fullName            String
+  occupation          String?
+  publicIdentifier    String?
+  profileUrl          String?
+  avatarUrl           String?
+  encryptedLiAt       String?
+  encryptedJsessionid String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  posts               Post[]
+  analytics           Analytics[]
+  refreshHistory      RefreshHistory[]
+  settings            Settings?
+}
+
+model Post {
+  id                String   @id @default(uuid()) @db.Uuid
+  profileId         String   @db.Uuid
+  activityUrn       String   @unique
+  text              String?  @db.Text
+  postUrl           String?
+  postedRelative    String?
+  numLikes          Int      @default(0)
+  numComments       Int      @default(0)
+  numShares         Int      @default(0)
+  numImpressions    Int      @default(0)
+  engagementScore   Int      @default(0)
+  engagementRate    Float    @default(0.0)
+  reactionBreakdown Json?
+  rank              Int      @default(0)
+  postType          String   @default("text")
+  hashtags          String[]
+  mentions          String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  profile           Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([activityUrn])
+}
+
+model Analytics {
+  id                    String   @id @default(uuid()) @db.Uuid
+  profileId             String   @db.Uuid
+  postsCount            Int      @default(0)
+  totalLikes            Int      @default(0)
+  totalComments         Int      @default(0)
+  totalShares           Int      @default(0)
+  totalImpressions      Int      @default(0)
+  averageLikes          Float    @default(0.0)
+  averageComments       Float    @default(0.0)
+  averageShares         Float    @default(0.0)
+  averageImpressions    Float    @default(0.0)
+  averageEngagementRate Float    @default(0.0)
+  topHashtags           Json?
+  topMentions           Json?
+  insights              Json?
+  createdAt             DateTime @default(now())
+  profile               Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model RefreshHistory {
+  id           String   @id @default(uuid()) @db.Uuid
+  profileId    String   @db.Uuid
+  status       String
+  errorMessage String?
+  postsFetched Int      @default(0)
+  createdAt    DateTime @default(now())
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Settings {
+  id          String   @id @default(uuid()) @db.Uuid
+  profileId   String   @unique @db.Uuid
+  theme       String   @default("dark")
+  autoRefresh Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
