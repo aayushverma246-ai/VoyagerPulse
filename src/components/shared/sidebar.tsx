@@ -8,11 +8,11 @@ import {
   LayoutDashboard, 
   BarChart3, 
   TableProperties, 
-  Lightbulb, 
   Settings, 
   LogOut,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 import { Logo } from './logo';
 
@@ -23,7 +23,7 @@ interface ProfileData {
   profileUrl: string | null;
 }
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen = false, setIsOpen }: { isOpen?: boolean, setIsOpen?: (v: boolean) => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -63,11 +63,22 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-80 h-screen border-r border-white/5 bg-zinc-950/40 backdrop-blur-xl flex flex-col justify-between shrink-0 sticky top-0">
+    <aside className={`
+      fixed inset-y-0 left-0 z-50 w-80 h-screen border-r border-white/5 bg-zinc-950/95 md:bg-zinc-950/40 backdrop-blur-xl flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out
+      ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      md:relative md:translate-x-0 md:sticky md:top-0
+    `}>
       {/* Top Section */}
       <div className="p-6">
-        <div className="mb-8">
+        <div className="mb-8 flex items-center justify-between md:block">
           <Logo />
+          {/* Close button for mobile */}
+          <button 
+            className="md:hidden p-2 -mr-2 text-zinc-400 hover:text-white"
+            onClick={() => setIsOpen?.(false)}
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Dynamic Profile Card */}
@@ -111,6 +122,7 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setIsOpen?.(false)}
                 className={`flex items-center justify-between px-3.5 py-3 rounded-lg text-sm font-medium transition-all group ${
                   isActive 
                     ? 'bg-indigo-500/10 border-l-2 border-indigo-500 text-indigo-300' 
