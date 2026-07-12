@@ -13,7 +13,8 @@ import {
   Copy, 
   ExternalLink, 
   RefreshCw,
-  Award
+  Award,
+  Settings
 } from 'lucide-react';
 
 interface OverviewData {
@@ -168,24 +169,37 @@ export default function DashboardClient({
           )}
           
           {profile ? (
-            <Link
-              href="/settings"
-              className="inline-flex items-center gap-3 bg-zinc-900 border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
-            >
-              {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt={profile.fullName} className="w-8 h-8 rounded-full border border-white/10" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold border border-white/10">
-                  {profile.fullName.charAt(0)}
-                </div>
-              )}
-              <div className="flex flex-col pr-2">
-                <span className="text-sm font-medium text-white leading-tight">{profile.fullName}</span>
-                {profile.occupation && (
-                  <span className="text-[10px] text-zinc-400 line-clamp-1 max-w-[150px]">{profile.occupation}</span>
+            <div className="flex items-center gap-3">
+              <a
+                href={profile.profileUrl || '#'}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-3 bg-zinc-900 border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-xl transition-all cursor-pointer group"
+                title="View LinkedIn Profile"
+              >
+                {profile.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt={profile.fullName} className="w-8 h-8 rounded-full border border-white/10 object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold border border-white/10">
+                    {profile.fullName.charAt(0)}
+                  </div>
                 )}
-              </div>
-            </Link>
+                <div className="flex flex-col pr-2 text-left">
+                  <span className="text-sm font-medium text-white leading-tight group-hover:text-indigo-400 transition-colors">{profile.fullName}</span>
+                  {profile.occupation && (
+                    <span className="text-[10px] text-zinc-400 line-clamp-1 max-w-[150px]">{profile.occupation}</span>
+                  )}
+                </div>
+              </a>
+              
+              <Link
+                href="/settings"
+                className="inline-flex items-center gap-2 bg-zinc-900 border border-white/10 hover:border-white/20 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-zinc-300 hover:text-white cursor-pointer"
+              >
+                <Settings className="h-4 w-4 text-zinc-400" />
+                <span>Settings</span>
+              </Link>
+            </div>
           ) : (
             <Link
               href="/settings"
