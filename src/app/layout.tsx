@@ -13,9 +13,12 @@ const fontMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'VoyagerPulse - Advanced LinkedIn Content Analytics Platform',
+  title: 'VoyagerPulse',
   description: 'Track and analyze your LinkedIn posts, engagement rates, impressions, and reaction breakdowns securely using advanced analytics and key insights.',
   keywords: 'LinkedIn analytics, creator metrics, SaaS, content optimization, post tracking',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
